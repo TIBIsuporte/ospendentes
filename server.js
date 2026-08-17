@@ -11,8 +11,8 @@ app.use(cors());
 app.use(express.static(__dirname));
 
 // Configuração do Supabase (use suas credenciais reais do projeto ossemcrm-db)
-const SUPABASE_URL = "SUA_URL_DO_SUPABASE";       // Ex: https://xxxx.supabase.co
-const SUPABASE_KEY = "SUA_CHAVE_ANON_OU_SERVICE";  // Chave pública ou de serviço
+const SUPABASE_URL = "https://cwmofpwuihrnifsvqhik.supabase.co";       // Ex: https://xxxx.supabase.co
+const SUPABASE_KEY = "sb_publishable_biWjIRo9x6maeZXcoKX6Lw_l-fjV0wP";  // Chave pública ou de serviço
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Rota que recebe os parâmetros, chama a nova API e salva no Supabase
