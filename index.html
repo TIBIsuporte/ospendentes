@@ -50,7 +50,6 @@
     .btn-secundario { background: #6c757d; }
     .btn-secundario:hover { background: #5a6268; }
 
-    /* Container para permitir rolagem horizontal devido ao grande volume de colunas */
     .table-container { overflow-x: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 10px; }
     table { border-collapse: collapse; width: 100%; }
     th { background: #0078d7; color: #fff; padding: 10px; text-align: left; white-space: nowrap; }
@@ -143,7 +142,6 @@
   </div>
 
   <script>
-    // Configuração Supabase
     const SUPABASE_URL = 'https://cwmofpwuihrnifsvqhik.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_biWjIRo9x6maeZXcoKX6Lw_l-fjV0wP';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -151,7 +149,6 @@
     let registrosGlobaisValidos = [];
     let lojasDisponiveis = [];
 
-    // Carrega as lojas do Supabase ao abrir a janela
     window.onload = async () => {
       try {
         const { data, error } = await supabaseClient
@@ -185,7 +182,6 @@
       const container = document.getElementById("listaLojasModal");
       container.innerHTML = "";
       const idsAtuais = document.getElementById("lojas").value.split(",").map(s => s.trim());
-
       const listaOrdenada = [...lista].sort((a, b) => Number(a.id) - Number(b.id));
 
       listaOrdenada.forEach(loja => {
@@ -232,8 +228,8 @@
 
     function confirmarSelecaoLojas() {
       const idsAtuaisSet = new Set(document.getElementById("lojas").value.split(",").map(s => s.trim()).filter(Boolean));
-      
       const labels = document.querySelectorAll("#listaLojasModal .item-loja-modal");
+      
       labels.forEach(label => {
         const cb = label.querySelector("input[type='checkbox']");
         if (cb) {
@@ -292,7 +288,6 @@
         return;
       }
 
-      // Filtro de segurança por ID da Loja caso o usuário tenha digitado no input
       const lojasDigitadasInput = document.getElementById("lojas").value.trim();
       const idsFiltro = lojasDigitadasInput ? lojasDigitadasInput.split(",").map(s => s.trim()) : [];
 
@@ -301,7 +296,6 @@
       data.forEach(venda => {
         const codigoLojaVenda = String(venda.CODIGOLOJA || "").trim();
 
-        // Se houver filtro de lojas preenchido, descarta itens que não pertencem à lista
         if (idsFiltro.length > 0 && !idsFiltro.includes(codigoLojaVenda)) {
           return;
         }
@@ -327,7 +321,9 @@
           NOMEMEDICO: venda.NOMEMEDICO || "SEM MEDICO",
           VALORBRUTO: venda.VALORBRUTO || "",
           DESCONTOVALOR: venda.DESCONTOVALOR || "",
+          DESCONTOCAIXA: venda.DESCONTOCAIXA || "",
           VALORLIQUIDO: venda.VALORLIQUIDO || "",
+          VALORJARECEBIDO: venda.VALORJARECEBIDO || "",
           STATUSDAVENDA: venda.STATUSDAVENDA || "",
           STATUSDAENTREGA: venda.STATUSDAENTREGA || ""
         });
@@ -351,7 +347,7 @@
       html += "<tr>" +
         "<th>Gerente</th><th>Loja</th><th>Nº OS</th><th>Data Venda</th><th>Previsão Entrega</th><th>Tipo Venda</th>" +
         "<th>Cliente</th><th>CPF</th><th>Celular</th><th>Endereço</th><th>Cidade</th><th>Vendedor</th>" +
-        "<th>Médico</th><th>Valor Bruto</th><th>Desc.</th><th>Valor Líq.</th><th>Status Venda</th><th>Status Entrega</th>" +
+        "<th>Médico</th><th>Valor Bruto</th><th>Desc. Valor</th><th>Desc. Caixa</th><th>Valor Líq.</th><th>Valor Recebido</th><th>Status Venda</th><th>Status Entrega</th>" +
         "</tr>";
       
       html += "<tr class='tabela-filtros'>" +
@@ -368,7 +364,7 @@
         `<th><input type="text" id="filtroCidade" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroVendedor" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroMedico" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th></th><th></th><th></th>` +
+        `<th></th><th></th><th></th><th></th><th></th>` +
         `<th><select id="filtroStatusVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroStatusEntrega" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         "</tr>";
@@ -407,7 +403,9 @@
           `<td>${item.NOMEMEDICO}</td>` +
           `<td>${item.VALORBRUTO}</td>` +
           `<td>${item.DESCONTOVALOR}</td>` +
+          `<td>${item.DESCONTOCAIXA}</td>` +
           `<td>${item.VALORLIQUIDO}</td>` +
+          `<td>${item.VALORJARECEBIDO}</td>` +
           `<td>${item.STATUSDAVENDA}</td>` +
           `<td>${item.STATUSDAENTREGA}</td>` +
           "</tr>";
@@ -439,13 +437,11 @@
 
     function atualizarSelectLojasPorGerente(registros) {
       const fGerente = document.getElementById("filtroGerente").value.toLowerCase();
-      
       const registrosFiltrados = fGerente 
         ? registros.filter(i => i.GERENTE.toLowerCase() === fGerente)
         : registros;
 
       const lojas = [...new Set(registrosFiltrados.map(i => i.LOJANOME))].sort();
-      
       const selectLoja = document.getElementById("filtroLoja");
       const valorAtual = selectLoja.value;
       
@@ -523,7 +519,7 @@
     const colunasExportacao = [
       "Gerente", "Loja", "Nº OS", "Data Venda", "Previsão Entrega", "Tipo Venda",
       "Cliente", "CPF", "Celular", "Endereço", "Cidade", "Vendedor",
-      "Médico", "Valor Bruto", "Desc.", "Valor Líq.", "Status Venda", "Status Entrega"
+      "Médico", "Valor Bruto", "Desc. Valor", "Desc. Caixa", "Valor Líq.", "Valor Recebido", "Status Venda", "Status Entrega"
     ];
 
     function exportarExcel() {
@@ -568,7 +564,7 @@
         head: [colunasExportacao],
         body: linhasTabela,
         startY: 22,
-        styles: { fontSize: 6 }
+        styles: { fontSize: 5.5 }
       });
 
       doc.save("relatorio_detalhes.pdf");
@@ -620,7 +616,7 @@
             head: [colunasExportacao],
             body: lojasMap[nomeLoja],
             startY: 28,
-            styles: { fontSize: 6 }
+            styles: { fontSize: 5.5 }
           });
 
           const nomeArquivoPDF = `${nomeLoja} ${gerenteFiltro}.pdf`.toLowerCase();
