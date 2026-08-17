@@ -290,90 +290,37 @@
         return;
       }
 
-      const excluirLinhas = [
-        "AIR OPTIX HYDRAGLYDE MULTIFOCAL",
-        "ARMACAO RX",
-        "ARMACAO SUN", 
-        "OUTROS", 
-        "OASYS", 
-        "ACUVUE 2",
-        "OASYS 1 DAY",
-        "OASYS ASTIGMATISMO",
-        "AIR OPTIX HYDRAGLYDE ASTIGMATISMO",
-        "AIR OPTIX HYDRAGLYDE MULTIFOCAL",
-        "OASYS 1 DAY ASTIGMATISMO",
-        "AIR OPTIX AQUA HYDRAGLYDE", 
-        "SERVICOS", 
-        "ARMACAO CLIPON", 
-        "TRATAMENTOS",
-        "RELOGIO",
-        "SEMI JOIA",
-        "CORRENTE"
-      ];
-
-      const lojasResumo = {};
       registrosGlobaisValidos = [];
 
-      // Como o novo JSON possui um array de ITENS dentro de cada venda, 
-      // varremos cada venda e expandimos seus itens para gerar as linhas da tabela.
+      // Processando os dados recebidos da O.S. (sem filtros de exclusão de linhas)
       data.forEach(venda => {
         const nomeLoja = venda.NOMELOJA || "OUTRAS LOJAS";
         const codigoLoja = venda.CODIGOLOJA || "";
         const gerenteLoja = obterGerentePorLoja(codigoLoja, nomeLoja);
         const medico = venda.NOMEMEDICO || "SEM MEDICO";
 
-        if (venda.ITENS && Array.isArray(venda.ITENS)) {
-          venda.ITENS.forEach(item => {
-            const linhaProduto = (item.LINHADEPRODUTO || "").trim().toUpperCase();
-            if (excluirLinhas.includes(linhaProduto)) return;
+        const registroProcessado = {
+          GERENTE: gerenteLoja,
+          LOJANOME: nomeLoja,
+          CODIGODAVENDA: venda.CODIGOVENDA || "",
+          TIPOVENDA: venda.TIPODEVENDA || "",
+          MEDICO: medico,
+          CLIENTE: venda.NOMECLIENTEPAGADOR || "",
+          VALORLIQUIDO: venda.VALORLIQUIDO || "",
+          STATUSVENDA: venda.STATUSDAVENDA || ""
+        };
 
-            // Mapeando para o formato que a nossa tela consome
-            const registroProcessado = {
-              GERENTE: gerenteLoja,
-              LOJANOME: nomeLoja,
-              CODIGODAVENDA: venda.CODIGOVENDA || "",
-              TIPOVENDA: venda.TIPODEVENDA || "",
-              DESCRICAOPRODUTO: item.DESCRICAOPRODUTO || "",
-              MEDICO: medico,
-              LINHADEPRODUTO: item.LINHADEPRODUTO || ""
-            };
-
-            // Regra de contagem para o Resumo (ex: SEM MEDICO ou COPIA SISTEMA)
-            // Caso queira adaptar para os novos valores de médico, ajuste aqui:
-            if (medico === "SEM MEDICO" || medico.includes("COPIA")) {
-              if (!lojasResumo[nomeLoja]) {
-                lojasResumo[nomeLoja] = { semMedico: 0, copiaSistema: 0 };
-              }
-              if (medico === "SEM MEDICO") lojasResumo[nomeLoja].semMedico++;
-              if (medico.includes("COPIA")) lojasResumo[nomeLoja].copiaSistema++;
-            }
-
-            registrosGlobaisValidos.push(registroProcessado);
-          });
-        }
+        registrosGlobaisValidos.push(registroProcessado);
       });
 
       if (registrosGlobaisValidos.length === 0) {
-        document.getElementById("resultado").innerHTML = "<p>Nenhum registro válido encontrado após aplicar os filtros de exclusão de produtos.</p>";
+        document.getElementById("resultado").innerHTML = "<p>Nenhum registro encontrado.</p>";
         return;
       }
 
       registrosGlobaisValidos.sort((a, b) => (a.LOJANOME || "").localeCompare(b.LOJANOME || ""));
-      const lojasOrdenadas = Object.keys(lojasResumo).sort();
 
-      let html = "<h3>Resumo por Loja</h3>";
-      html += "<table><thead><tr><th>Loja</th><th>SEM MEDICO</th><th>COPIA SISTEMA</th></tr></thead><tbody>";
-      if (lojasOrdenadas.length > 0) {
-        lojasOrdenadas.forEach(loja => {
-          const total = lojasResumo[loja];
-          html += `<tr><td>${loja}</td><td>${total.semMedico}</td><td>${total.copiaSistema}</td></tr>`;
-        });
-      } else {
-        html += `<tr><td colspan="3" style="text-align: center; color: #666;">Nenhum registro com ressalvas de médico no período.</td></tr>`;
-      }
-      html += "</tbody></table>";
-
-      html += "<h3>Detalhes Gerais por OS</h3>";
+      let html = "<h3>Detalhes Gerais por OS (Indexado por Loja)</h3>";
       html += `<div class="botoes-exportacao">
                  <button type="button" class="btn-excel" onclick="exportarExcel()">Exportar para Excel</button>
                  <button type="button" class="btn-pdf" onclick="exportarPDF()">Exportar para PDF</button>
@@ -382,7 +329,7 @@
 
       html += '<table id="tabelaDetalhes"><thead>';
       html += "<tr>" +
-        "<th>Gerente</th><th>Loja</th><th>Nº OS</th><th>Tipo de Venda</th><th>Produto</th><th>Médico</th><th>Linha de Produto</th>" +
+        "<th>Gerente</th><th>Loja</th><th>Nº OS</th><th>Tipo de Venda</th><th>Cliente</th><th>Médico</th><th>Status</th><th>Valor Líq.</th>" +
         "</tr>";
       
       html += "<tr class='tabela-filtros'>" +
@@ -390,9 +337,10 @@
         `<th><select id="filtroLoja" onchange="filtrarTabela()"><option value="">Todas</option></select></th>` +
         `<th><input type="text" id="filtroOS" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroTipoVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th><input type="text" id="filtroProduto" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><input type="text" id="filtroCliente" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroMedico" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th><select id="filtroLinha" onchange="filtrarTabela()"><option value="">Todas</option></select></th>` +
+        `<th><select id="filtroStatus" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
+        `<th></th>` +
         "</tr>";
 
       html += "</thead><tbody id='corpoTabelaDetalhes'>";
@@ -402,16 +350,17 @@
                 "data-gerente='" + item.GERENTE + "' " +
                 "data-os='" + item.CODIGODAVENDA + "' " +
                 "data-tipovenda='" + item.TIPOVENDA + "' " +
-                "data-produto='" + item.DESCRICAOPRODUTO + "' " +
+                "data-cliente='" + item.CLIENTE + "' " +
                 "data-medico='" + item.MEDICO + "' " +
-                "data-linha='" + item.LINHADEPRODUTO + "'>" +
+                "data-status='" + item.STATUSVENDA + "'>" +
           `<td>${item.GERENTE}</td>` +
           `<td>${item.LOJANOME}</td>` +
           `<td>${item.CODIGODAVENDA}</td>` +
           `<td>${item.TIPOVENDA}</td>` +
-          `<td>${item.DESCRICAOPRODUTO}</td>` +
+          `<td>${item.CLIENTE}</td>` +
           `<td>${item.MEDICO}</td>` +
-          `<td>${item.LINHADEPRODUTO}</td>` +
+          `<td>${item.STATUSVENDA}</td>` +
+          `<td>${item.VALORLIQUIDO}</td>` +
           "</tr>";
       });
 
@@ -425,12 +374,12 @@
       const gerentes = [...new Set(registros.map(i => i.GERENTE))].sort();
       const tiposVenda = [...new Set(registros.map(i => i.TIPOVENDA))].sort();
       const medicos = [...new Set(registros.map(i => i.MEDICO))].sort();
-      const linhas = [...new Set(registros.map(i => i.LINHADEPRODUTO))].sort();
+      const statusVenda = [...new Set(registros.map(i => i.STATUSVENDA))].sort();
 
       preencherSelect("filtroGerente", gerentes);
       preencherSelect("filtroTipoVenda", tiposVenda);
       preencherSelect("filtroMedico", medicos);
-      preencherSelect("filtroLinha", linhas);
+      preencherSelect("filtroStatus", statusVenda);
 
       atualizarSelectLojasPorGerente(registros);
     }
@@ -482,9 +431,9 @@
       const fGerente = document.getElementById("filtroGerente").value.toLowerCase();
       const fOS = document.getElementById("filtroOS").value.toLowerCase();
       const fTipoVenda = document.getElementById("filtroTipoVenda").value.toLowerCase();
-      const fProduto = document.getElementById("filtroProduto").value.toLowerCase();
+      const fCliente = document.getElementById("filtroCliente").value.toLowerCase();
       const fMedico = document.getElementById("filtroMedico").value.toLowerCase();
-      const fLinha = document.getElementById("filtroLinha").value.toLowerCase();
+      const fStatus = document.getElementById("filtroStatus").value.toLowerCase();
 
       const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
 
@@ -493,18 +442,18 @@
         const lGerente = linha.getAttribute("data-gerente").toLowerCase();
         const lOS = linha.getAttribute("data-os").toLowerCase();
         const lTipoVenda = linha.getAttribute("data-tipovenda").toLowerCase();
-        const lProduto = linha.getAttribute("data-produto").toLowerCase();
+        const lCliente = linha.getAttribute("data-cliente").toLowerCase();
         const lMedico = linha.getAttribute("data-medico").toLowerCase();
-        const lLinha = linha.getAttribute("data-linha").toLowerCase();
+        const lStatus = linha.getAttribute("data-status").toLowerCase();
 
         const match = 
           (!fLoja || lLoja.includes(fLoja)) &&
           (!fGerente || lGerente.includes(fGerente)) &&
           (!fOS || lOS.includes(fOS)) &&
           (!fTipoVenda || lTipoVenda.includes(fTipoVenda)) &&
-          (!fProduto || lProduto.includes(fProduto)) &&
+          (!fCliente || lCliente.includes(fCliente)) &&
           (!fMedico || lMedico.includes(fMedico)) &&
-          (!fLinha || lLinha.includes(fLinha));
+          (!fStatus || lStatus.includes(fStatus));
 
         linha.style.display = match ? "" : "none";
       }
@@ -515,7 +464,7 @@
       const linhas = Array.from(tabela.querySelectorAll("tbody tr")).filter(tr => tr.style.display !== "none");
       
       let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-      const cabecalhos = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Produto", "Médico", "Linha de Produto"];
+      const cabecalhos = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Cliente", "Médico", "Status", "Valor Líq."];
       csvContent += cabecalhos.join(";") + "\n";
 
       linhas.forEach(tr => {
@@ -539,7 +488,7 @@
       doc.setFontSize(14);
       doc.text("Relatório de OS Pendentes (Detalhes)", 14, 15);
 
-      const colunas = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Produto", "Médico", "Linha de Produto"];
+      const colunas = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Cliente", "Médico", "Status", "Valor Líq."];
       const linhasTabela = [];
       
       const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
@@ -553,7 +502,8 @@
             cols[3].innerText,
             cols[4].innerText,
             cols[5].innerText,
-            cols[6].innerText
+            cols[6].innerText,
+            cols[7].innerText
           ]);
         }
       }
@@ -593,7 +543,8 @@
             cols[3].innerText,
             cols[4].innerText,
             cols[5].innerText,
-            cols[6].innerText
+            cols[6].innerText,
+            cols[7].innerText
           ]);
         }
       }
@@ -618,7 +569,7 @@
           doc.setTextColor(80, 80, 80);
           doc.text(`Loja: ${nomeLoja} | Gerente: ${gerenteFiltro}`, 14, 23);
 
-          const colunas = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Produto", "Médico", "Linha de Produto"];
+          const colunas = ["Gerente", "Loja", "Nº OS", "Tipo de Venda", "Cliente", "Médico", "Status", "Valor Líq."];
           
           doc.autoTable({
             head: [colunas],
