@@ -253,6 +253,13 @@
       return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
+    function formatarMoedaBR(valor) {
+      if (valor === "" || valor === null || valor === undefined) return "";
+      const numero = Number(String(valor).replace(",", "."));
+      if (isNaN(numero)) return valor;
+      return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
     async function consultar() {
       document.getElementById("loadingOverlay").style.display = "flex";
 
@@ -311,19 +318,12 @@
           DATAVENDA: venda.DATAVENDA || "",
           PREVISAODEENTREGA: venda.PREVISAODEENTREGA || "",
           TIPODEVENDA: venda.TIPODEVENDA || "",
-          NOMECLIENTEPAGADOR: venda.NOMECLIENTEPAGADOR || "",
-          CPFCLIENTEPAGADOR: venda.CPFCLIENTEPAGADOR || "",
-          NUMEROCELULAR: venda.NUMEROCELULAR || "",
-          ENDERECORUA: venda.ENDERECORUA || "",
-          ENDERECONUMERO: venda.ENDERECONUMERO || "",
-          ENDERECOCIDADE: venda.ENDERECOCIDADE || "",
           NOMEVENDEDOR: venda.NOMEVENDEDOR || "",
-          NOMEMEDICO: venda.NOMEMEDICO || "SEM MEDICO",
-          VALORBRUTO: venda.VALORBRUTO || "",
-          DESCONTOVALOR: venda.DESCONTOVALOR || "",
-          DESCONTOCAIXA: venda.DESCONTOCAIXA || "",
-          VALORLIQUIDO: venda.VALORLIQUIDO || "",
-          VALORJARECEBIDO: venda.VALORJARECEBIDO || "",
+          VALORBRUTO: formatarMoedaBR(venda.VALORBRUTO),
+          DESCONTOVALOR: formatarMoedaBR(venda.DESCONTOVALOR),
+          DESCONTOCAIXA: formatarMoedaBR(venda.DESCONTOCAIXA),
+          VALORLIQUIDO: formatarMoedaBR(venda.VALORLIQUIDO),
+          VALORJARECEBIDO: formatarMoedaBR(venda.VALORJARECEBIDO),
           STATUSDAVENDA: venda.STATUSDAVENDA || "",
           STATUSDAENTREGA: venda.STATUSDAENTREGA || ""
         });
@@ -346,8 +346,7 @@
       html += '<div class="table-container"><table id="tabelaDetalhes"><thead>';
       html += "<tr>" +
         "<th>Gerente</th><th>Loja</th><th>Nº OS</th><th>Data Venda</th><th>Previsão Entrega</th><th>Tipo Venda</th>" +
-        "<th>Cliente</th><th>CPF</th><th>Celular</th><th>Endereço</th><th>Cidade</th><th>Vendedor</th>" +
-        "<th>Médico</th><th>Valor Bruto</th><th>Desc. Valor</th><th>Desc. Caixa</th><th>Valor Líq.</th><th>Valor Recebido</th><th>Status Venda</th><th>Status Entrega</th>" +
+        "<th>Vendedor</th><th>Valor Bruto</th><th>Desc. Valor</th><th>Desc. Caixa</th><th>Valor Líq.</th><th>Valor Recebido</th><th>Status Venda</th><th>Status Entrega</th>" +
         "</tr>";
       
       html += "<tr class='tabela-filtros'>" +
@@ -357,13 +356,7 @@
         `<th><input type="text" id="filtroDataVenda" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><input type="text" id="filtroPrevisao" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroTipoVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th><input type="text" id="filtroCliente" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroCpf" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroCelular" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroEndereco" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroCidade" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroVendedor" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th><select id="filtroMedico" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th></th><th></th><th></th><th></th><th></th>` +
         `<th><select id="filtroStatusVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroStatusEntrega" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
@@ -372,20 +365,13 @@
       html += "</thead><tbody id='corpoTabelaDetalhes'>";
 
       registrosGlobaisValidos.forEach(item => {
-        const enderecoCompleto = `${item.ENDERECORUA}, ${item.ENDERECONUMERO}`;
         html += "<tr data-loja='" + (item.LOJANOME || "") + "' " +
                 "data-gerente='" + item.GERENTE + "' " +
                 "data-os='" + item.CODIGODAVENDA + "' " +
                 "data-datavenda='" + item.DATAVENDA + "' " +
                 "data-previsao='" + item.PREVISAODEENTREGA + "' " +
                 "data-tipovenda='" + item.TIPODEVENDA + "' " +
-                "data-cliente='" + item.NOMECLIENTEPAGADOR + "' " +
-                "data-cpf='" + item.CPFCLIENTEPAGADOR + "' " +
-                "data-celular='" + item.NUMEROCELULAR + "' " +
-                "data-endereco='" + enderecoCompleto + "' " +
-                "data-cidade='" + item.ENDERECOCIDADE + "' " +
                 "data-vendedor='" + item.NOMEVENDEDOR + "' " +
-                "data-medico='" + item.NOMEMEDICO + "' " +
                 "data-statusvenda='" + item.STATUSDAVENDA + "' " +
                 "data-statusentrega='" + item.STATUSDAENTREGA + "'>" +
           `<td>${item.GERENTE}</td>` +
@@ -394,13 +380,7 @@
           `<td>${item.DATAVENDA}</td>` +
           `<td>${item.PREVISAODEENTREGA}</td>` +
           `<td>${item.TIPODEVENDA}</td>` +
-          `<td>${item.NOMECLIENTEPAGADOR}</td>` +
-          `<td>${item.CPFCLIENTEPAGADOR}</td>` +
-          `<td>${item.NUMEROCELULAR}</td>` +
-          `<td>${enderecoCompleto}</td>` +
-          `<td>${item.ENDERECOCIDADE}</td>` +
           `<td>${item.NOMEVENDEDOR}</td>` +
-          `<td>${item.NOMEMEDICO}</td>` +
           `<td>${item.VALORBRUTO}</td>` +
           `<td>${item.DESCONTOVALOR}</td>` +
           `<td>${item.DESCONTOCAIXA}</td>` +
@@ -421,14 +401,12 @@
       const gerentes = [...new Set(registros.map(i => i.GERENTE))].sort();
       const tiposVenda = [...new Set(registros.map(i => i.TIPODEVENDA))].sort();
       const vendedores = [...new Set(registros.map(i => i.NOMEVENDEDOR))].sort();
-      const medicos = [...new Set(registros.map(i => i.NOMEMEDICO))].sort();
       const statusVenda = [...new Set(registros.map(i => i.STATUSDAVENDA))].sort();
       const statusEntrega = [...new Set(registros.map(i => i.STATUSDAENTREGA))].sort();
 
       preencherSelect("filtroGerente", gerentes);
       preencherSelect("filtroTipoVenda", tiposVenda);
       preencherSelect("filtroVendedor", vendedores);
-      preencherSelect("filtroMedico", medicos);
       preencherSelect("filtroStatusVenda", statusVenda);
       preencherSelect("filtroStatusEntrega", statusEntrega);
 
@@ -482,13 +460,7 @@
       const fDataVenda = document.getElementById("filtroDataVenda").value.toLowerCase();
       const fPrevisao = document.getElementById("filtroPrevisao").value.toLowerCase();
       const fTipoVenda = document.getElementById("filtroTipoVenda").value.toLowerCase();
-      const fCliente = document.getElementById("filtroCliente").value.toLowerCase();
-      const fCpf = document.getElementById("filtroCpf").value.toLowerCase();
-      const fCelular = document.getElementById("filtroCelular").value.toLowerCase();
-      const fEndereco = document.getElementById("filtroEndereco").value.toLowerCase();
-      const fCidade = document.getElementById("filtroCidade").value.toLowerCase();
       const fVendedor = document.getElementById("filtroVendedor").value.toLowerCase();
-      const fMedico = document.getElementById("filtroMedico").value.toLowerCase();
       const fStatusVenda = document.getElementById("filtroStatusVenda").value.toLowerCase();
       const fStatusEntrega = document.getElementById("filtroStatusEntrega").value.toLowerCase();
 
@@ -502,13 +474,7 @@
           (!fDataVenda || linha.getAttribute("data-datavenda").toLowerCase().includes(fDataVenda)) &&
           (!fPrevisao || linha.getAttribute("data-previsao").toLowerCase().includes(fPrevisao)) &&
           (!fTipoVenda || linha.getAttribute("data-tipovenda").toLowerCase().includes(fTipoVenda)) &&
-          (!fCliente || linha.getAttribute("data-cliente").toLowerCase().includes(fCliente)) &&
-          (!fCpf || linha.getAttribute("data-cpf").toLowerCase().includes(fCpf)) &&
-          (!fCelular || linha.getAttribute("data-celular").toLowerCase().includes(fCelular)) &&
-          (!fEndereco || linha.getAttribute("data-endereco").toLowerCase().includes(fEndereco)) &&
-          (!fCidade || linha.getAttribute("data-cidade").toLowerCase().includes(fCidade)) &&
           (!fVendedor || linha.getAttribute("data-vendedor").toLowerCase().includes(fVendedor)) &&
-          (!fMedico || linha.getAttribute("data-medico").toLowerCase().includes(fMedico)) &&
           (!fStatusVenda || linha.getAttribute("data-statusvenda").toLowerCase().includes(fStatusVenda)) &&
           (!fStatusEntrega || linha.getAttribute("data-statusentrega").toLowerCase().includes(fStatusEntrega));
 
@@ -518,8 +484,7 @@
 
     const colunasExportacao = [
       "Gerente", "Loja", "Nº OS", "Data Venda", "Previsão Entrega", "Tipo Venda",
-      "Cliente", "CPF", "Celular", "Endereço", "Cidade", "Vendedor",
-      "Médico", "Valor Bruto", "Desc. Valor", "Desc. Caixa", "Valor Líq.", "Valor Recebido", "Status Venda", "Status Entrega"
+      "Vendedor", "Valor Bruto", "Desc. Valor", "Desc. Caixa", "Valor Líq.", "Valor Recebido", "Status Venda", "Status Entrega"
     ];
 
     function exportarExcel() {
@@ -564,7 +529,7 @@
         head: [colunasExportacao],
         body: linhasTabela,
         startY: 22,
-        styles: { fontSize: 5.5 }
+        styles: { fontSize: 6 }
       });
 
       doc.save("relatorio_detalhes.pdf");
@@ -616,7 +581,7 @@
             head: [colunasExportacao],
             body: lojasMap[nomeLoja],
             startY: 28,
-            styles: { fontSize: 5.5 }
+            styles: { fontSize: 6 }
           });
 
           const nomeArquivoPDF = `${nomeLoja} ${gerenteFiltro}.pdf`.toLowerCase();
