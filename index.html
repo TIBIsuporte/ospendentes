@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatório de OS Pendentes</title>
+  <title>Auditoria: Relatório de OS Pendentes</title>
   <!-- Importando as bibliotecas jsPDF e AutoTable via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -78,7 +78,7 @@
 <body>
 
   <div class="header-titulo">
-    <h2>Relatório de OS Pendentes</h2>
+    <h2>Auditoria: Relatório de OS Pendentes</h2>
     <span class="titulo-aga">by AGA</span>
   </div>
 
@@ -227,23 +227,16 @@
     }
 
     function confirmarSelecaoLojas() {
-      const idsAtuaisSet = new Set(document.getElementById("lojas").value.split(",").map(s => s.trim()).filter(Boolean));
-      const labels = document.querySelectorAll("#listaLojasModal .item-loja-modal");
+      const idsSelecionados = [];
+      const checkboxes = document.querySelectorAll("#listaLojasModal input[type='checkbox']");
       
-      labels.forEach(label => {
-        const cb = label.querySelector("input[type='checkbox']");
-        if (cb) {
-          if (cb.checked) {
-            idsAtuaisSet.add(cb.value);
-          } else {
-            if (label.style.display !== "none") {
-              idsAtuaisSet.delete(cb.value);
-            }
-          }
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          idsSelecionados.push(cb.value);
         }
       });
 
-      document.getElementById("lojas").value = Array.from(idsAtuaisSet).join(",");
+      document.getElementById("lojas").value = idsSelecionados.join(",");
       fecharModalLojas();
     }
 
@@ -346,7 +339,7 @@
       html += '<div class="table-container"><table id="tabelaDetalhes"><thead>';
       html += "<tr>" +
         "<th>Gerente</th><th>Loja</th><th>Nº OS</th><th>Data Venda</th><th>Previsão Entrega</th><th>Tipo Venda</th>" +
-        "<th>Vendedor</th><th>Valor Bruto</th><th>Desc. Valor</th><th>Desc. Caixa</th><th>Valor Líq.</th><th>Valor Recebido</th><th>Status Venda</th><th>Status Entrega</th>" +
+        "<th>Vendedor</th><th>Valor Bruto</th><th>Desc. Valor</th><th>Desc. Caixa</th><th>Valor Líq.</th><th>Valor Recebido</th><th>Pagamento</th><th>Status Entrega</th>" +
         "</tr>";
       
       html += "<tr class='tabela-filtros'>" +
@@ -484,7 +477,7 @@
 
     const colunasExportacao = [
       "Gerente", "Loja", "Nº OS", "Data Venda", "Previsão Entrega", "Tipo Venda",
-      "Vendedor", "Valor Bruto", "Desc. Valor", "Desc. Caixa", "Valor Líq.", "Valor Recebido", "Status Venda", "Status Entrega"
+      "Vendedor", "Valor Bruto", "Desc. Valor", "Desc. Caixa", "Valor Líq.", "Valor Recebido", "Pagamento", "Status Entrega"
     ];
 
     function exportarExcel() {
@@ -513,7 +506,7 @@
       const doc = new jsPDF('l', 'mm', 'a4');
       
       doc.setFontSize(14);
-      doc.text("Relatório de OS Pendentes (Detalhes)", 14, 15);
+      doc.text("Auditoria: Relatório de OS Pendentes (Detalhes)", 14, 15);
 
       const linhasTabela = [];
       const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
@@ -571,7 +564,7 @@
           
           doc.setFontSize(16);
           doc.setTextColor(0, 120, 215);
-          doc.text("Relatório de OS Pendentes", 14, 15);
+          doc.text("Auditoria: Relatório de OS Pendentes", 14, 15);
           
           doc.setFontSize(11);
           doc.setTextColor(80, 80, 80);
