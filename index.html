@@ -350,11 +350,11 @@
         `<th><input type="text" id="filtroPrevisao" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroTipoVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroVendedor" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th><input type="text" id="filtroValorBruto" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroDescValor" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroDescCaixa" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroValorLiquido" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
-        `<th><input type="text" id="filtroValorRecebido" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><select id="filtroValorBruto" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
+        `<th><select id="filtroDescValor" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
+        `<th><select id="filtroDescCaixa" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
+        `<th><select id="filtroValorLiquido" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
+        `<th><select id="filtroValorRecebido" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroStatusVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroStatusEntrega" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         "</tr>";
@@ -403,16 +403,36 @@
       const gerentes = [...new Set(registros.map(i => i.GERENTE))].sort();
       const tiposVenda = [...new Set(registros.map(i => i.TIPODEVENDA))].sort();
       const vendedores = [...new Set(registros.map(i => i.NOMEVENDEDOR))].sort();
+      
+      // Coleta valores únicos e ordena numericamente para as colunas de valores
+      const valoresBrutos = [...new Set(registros.map(i => i.VALORBRUTO))].sort((a, b) => parseMoedaParaNumero(a) - parseMoedaParaNumero(b));
+      const descValores = [...new Set(registros.map(i => i.DESCONTOVALOR))].sort((a, b) => parseMoedaParaNumero(a) - parseMoedaParaNumero(b));
+      const descCaixas = [...new Set(registros.map(i => i.DESCONTOCAIXA))].sort((a, b) => parseMoedaParaNumero(a) - parseMoedaParaNumero(b));
+      const valoresLiquidos = [...new Set(registros.map(i => i.VALORLIQUIDO))].sort((a, b) => parseMoedaParaNumero(a) - parseMoedaParaNumero(b));
+      const valoresRecebidos = [...new Set(registros.map(i => i.VALORJARECEBIDO))].sort((a, b) => parseMoedaParaNumero(a) - parseMoedaParaNumero(b));
+
       const statusVenda = [...new Set(registros.map(i => i.STATUSDAVENDA))].sort();
       const statusEntrega = [...new Set(registros.map(i => i.STATUSDAENTREGA))].sort();
 
       preencherSelect("filtroGerente", gerentes);
       preencherSelect("filtroTipoVenda", tiposVenda);
       preencherSelect("filtroVendedor", vendedores);
+      preencherSelect("filtroValorBruto", valoresBrutos);
+      preencherSelect("filtroDescValor", descValores);
+      preencherSelect("filtroDescCaixa", descCaixas);
+      preencherSelect("filtroValorLiquido", valoresLiquidos);
+      preencherSelect("filtroValorRecebido", valoresRecebidos);
       preencherSelect("filtroStatusVenda", statusVenda);
       preencherSelect("filtroStatusEntrega", statusEntrega);
 
       atualizarSelectLojasPorGerente(registros);
+    }
+
+    function parseMoedaParaNumero(valorStr) {
+      if (!valorStr) return 0;
+      const limpo = String(valorStr).replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+      const num = Number(limpo);
+      return isNaN(num) ? 0 : num;
     }
 
     function atualizarSelectLojasPorGerente(registros) {
@@ -464,12 +484,11 @@
       const fTipoVenda = document.getElementById("filtroTipoVenda").value.toLowerCase();
       const fVendedor = document.getElementById("filtroVendedor").value.toLowerCase();
       
-      // Filtros de valores (removendo pontos e trocando vírgulas por pontos para facilitar a busca numérica/parcial)
-      const fValorBruto = document.getElementById("filtroValorBruto").value.toLowerCase().replace(',', '.');
-      const fDescValor = document.getElementById("filtroDescValor").value.toLowerCase().replace(',', '.');
-      const fDescCaixa = document.getElementById("filtroDescCaixa").value.toLowerCase().replace(',', '.');
-      const fValorLiquido = document.getElementById("filtroValorLiquido").value.toLowerCase().replace(',', '.');
-      const fValorRecebido = document.getElementById("filtroValorRecebido").value.toLowerCase().replace(',', '.');
+      const fValorBruto = document.getElementById("filtroValorBruto").value;
+      const fDescValor = document.getElementById("filtroDescValor").value;
+      const fDescCaixa = document.getElementById("filtroDescCaixa").value;
+      const fValorLiquido = document.getElementById("filtroValorLiquido").value;
+      const fValorRecebido = document.getElementById("filtroValorRecebido").value;
 
       const fStatusVenda = document.getElementById("filtroStatusVenda").value.toLowerCase();
       const fStatusEntrega = document.getElementById("filtroStatusEntrega").value.toLowerCase();
@@ -477,13 +496,6 @@
       const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
 
       for (let linha of linhas) {
-        // Normaliza os valores da linha guardados nos atributos data-* para busca consistente
-        const valBrutoStr = (linha.getAttribute("data-valorbruto") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
-        const descValorStr = (linha.getAttribute("data-descvalor") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
-        const descCaixaStr = (linha.getAttribute("data-desccaixa") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
-        const valLiqStr = (linha.getAttribute("data-valorliquido") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
-        const valRecStr = (linha.getAttribute("data-valorrecebido") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
-
         const match = 
           (!fLoja || linha.getAttribute("data-loja").toLowerCase().includes(fLoja)) &&
           (!fGerente || linha.getAttribute("data-gerente").toLowerCase().includes(fGerente)) &&
@@ -492,11 +504,11 @@
           (!fPrevisao || linha.getAttribute("data-previsao").toLowerCase().includes(fPrevisao)) &&
           (!fTipoVenda || linha.getAttribute("data-tipovenda").toLowerCase().includes(fTipoVenda)) &&
           (!fVendedor || linha.getAttribute("data-vendedor").toLowerCase().includes(fVendedor)) &&
-          (!fValorBruto || valBrutoStr.includes(fValorBruto)) &&
-          (!fDescValor || descValorStr.includes(fDescValor)) &&
-          (!fDescCaixa || descCaixaStr.includes(fDescCaixa)) &&
-          (!fValorLiquido || valLiqStr.includes(fValorLiquido)) &&
-          (!fValorRecebido || valRecStr.includes(fValRecStr)) &&
+          (!fValorBruto || linha.getAttribute("data-valorbruto") === fValorBruto) &&
+          (!fDescValor || linha.getAttribute("data-descvalor") === fDescValor) &&
+          (!fDescCaixa || linha.getAttribute("data-desccaixa") === fDescCaixa) &&
+          (!fValorLiquido || linha.getAttribute("data-valorliquido") === fValorLiquido) &&
+          (!fValorRecebido || linha.getAttribute("data-valorrecebido") === fValorRecebido) &&
           (!fStatusVenda || linha.getAttribute("data-statusvenda").toLowerCase().includes(fStatusVenda)) &&
           (!fStatusEntrega || linha.getAttribute("data-statusentrega").toLowerCase().includes(fStatusEntrega));
 
