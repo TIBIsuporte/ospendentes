@@ -350,7 +350,11 @@
         `<th><input type="text" id="filtroPrevisao" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroTipoVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroVendedor" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
-        `<th></th><th></th><th></th><th></th><th></th>` +
+        `<th><input type="text" id="filtroValorBruto" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><input type="text" id="filtroDescValor" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><input type="text" id="filtroDescCaixa" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><input type="text" id="filtroValorLiquido" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
+        `<th><input type="text" id="filtroValorRecebido" onkeyup="filtrarTabela()" placeholder="Filtrar..."></th>` +
         `<th><select id="filtroStatusVenda" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         `<th><select id="filtroStatusEntrega" onchange="filtrarTabela()"><option value="">Todos</option></select></th>` +
         "</tr>";
@@ -365,6 +369,11 @@
                 "data-previsao='" + item.PREVISAODEENTREGA + "' " +
                 "data-tipovenda='" + item.TIPODEVENDA + "' " +
                 "data-vendedor='" + item.NOMEVENDEDOR + "' " +
+                "data-valorbruto='" + item.VALORBRUTO + "' " +
+                "data-descvalor='" + item.DESCONTOVALOR + "' " +
+                "data-desccaixa='" + item.DESCONTOCAIXA + "' " +
+                "data-valorliquido='" + item.VALORLIQUIDO + "' " +
+                "data-valorrecebido='" + item.VALORJARECEBIDO + "' " +
                 "data-statusvenda='" + item.STATUSDAVENDA + "' " +
                 "data-statusentrega='" + item.STATUSDAENTREGA + "'>" +
           `<td>${item.GERENTE}</td>` +
@@ -454,12 +463,27 @@
       const fPrevisao = document.getElementById("filtroPrevisao").value.toLowerCase();
       const fTipoVenda = document.getElementById("filtroTipoVenda").value.toLowerCase();
       const fVendedor = document.getElementById("filtroVendedor").value.toLowerCase();
+      
+      // Filtros de valores (removendo pontos e trocando vírgulas por pontos para facilitar a busca numérica/parcial)
+      const fValorBruto = document.getElementById("filtroValorBruto").value.toLowerCase().replace(',', '.');
+      const fDescValor = document.getElementById("filtroDescValor").value.toLowerCase().replace(',', '.');
+      const fDescCaixa = document.getElementById("filtroDescCaixa").value.toLowerCase().replace(',', '.');
+      const fValorLiquido = document.getElementById("filtroValorLiquido").value.toLowerCase().replace(',', '.');
+      const fValorRecebido = document.getElementById("filtroValorRecebido").value.toLowerCase().replace(',', '.');
+
       const fStatusVenda = document.getElementById("filtroStatusVenda").value.toLowerCase();
       const fStatusEntrega = document.getElementById("filtroStatusEntrega").value.toLowerCase();
 
       const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
 
       for (let linha of linhas) {
+        // Normaliza os valores da linha guardados nos atributos data-* para busca consistente
+        const valBrutoStr = (linha.getAttribute("data-valorbruto") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
+        const descValorStr = (linha.getAttribute("data-descvalor") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
+        const descCaixaStr = (linha.getAttribute("data-desccaixa") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
+        const valLiqStr = (linha.getAttribute("data-valorliquido") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
+        const valRecStr = (linha.getAttribute("data-valorrecebido") || "").toLowerCase().replace('r$', '').trim().replace(/\./g, '').replace(',', '.');
+
         const match = 
           (!fLoja || linha.getAttribute("data-loja").toLowerCase().includes(fLoja)) &&
           (!fGerente || linha.getAttribute("data-gerente").toLowerCase().includes(fGerente)) &&
@@ -468,6 +492,11 @@
           (!fPrevisao || linha.getAttribute("data-previsao").toLowerCase().includes(fPrevisao)) &&
           (!fTipoVenda || linha.getAttribute("data-tipovenda").toLowerCase().includes(fTipoVenda)) &&
           (!fVendedor || linha.getAttribute("data-vendedor").toLowerCase().includes(fVendedor)) &&
+          (!fValorBruto || valBrutoStr.includes(fValorBruto)) &&
+          (!fDescValor || descValorStr.includes(fDescValor)) &&
+          (!fDescCaixa || descCaixaStr.includes(fDescCaixa)) &&
+          (!fValorLiquido || valLiqStr.includes(fValorLiquido)) &&
+          (!fValorRecebido || valRecStr.includes(fValRecStr)) &&
           (!fStatusVenda || linha.getAttribute("data-statusvenda").toLowerCase().includes(fStatusVenda)) &&
           (!fStatusEntrega || linha.getAttribute("data-statusentrega").toLowerCase().includes(fStatusEntrega));
 
