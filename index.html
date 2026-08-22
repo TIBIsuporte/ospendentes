@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -569,31 +570,37 @@
       doc.save("relatorio_detalhes.pdf");
     }
 
-    function exportarPDFsPorGerencia() {
+ function exportarPDFsPorGerencia() {
       const gerenteFiltro = document.getElementById("filtroGerente").value;
       if (!gerenteFiltro) {
         alert("Por favor, selecione uma Gerente no filtro da tabela antes de exportar os PDFs individuais por loja!");
         return;
       }
 
-      const linhas = document.getElementById("corpoTabelaDetalhes").getElementsByTagName("tr");
+      // Pega todas as linhas visíveis na tabela (respeitando todos os filtros aplicados)
+      const linhas = document.querySelectorAll("#corpoTabelaDetalhes tr");
       const lojasMap = {}; 
 
-      for (let linha of linhas) {
-        const lGerente = linha.getAttribute("data-gerente");
-        if (lGerente.toLowerCase() === gerenteFiltro.toLowerCase()) {
-          const lLoja = linha.getAttribute("data-loja");
-          if (!lojasMap[lLoja]) {
-            lojasMap[lLoja] = [];
+      linhas.forEach(linha => {
+        // Verifica se a linha está visível no grid atual
+        if (linha.style.display !== "none") {
+          const lGerente = linha.getAttribute("data-gerente");
+          
+          // Confirma se bate com a gerência selecionada
+          if (lGerente.toLowerCase() === gerenteFiltro.toLowerCase()) {
+            const lLoja = linha.getAttribute("data-loja");
+            if (!lojasMap[lLoja]) {
+              lojasMap[lLoja] = [];
+            }
+            const cols = linha.getElementsByTagName("td");
+            lojasMap[lLoja].push(Array.from(cols).map(c => c.innerText));
           }
-          const cols = linha.getElementsByTagName("td");
-          lojasMap[lLoja].push(Array.from(cols).map(c => c.innerText));
         }
-      }
+      });
 
       const nomesLojas = Object.keys(lojasMap);
       if (nomesLojas.length === 0) {
-        alert("Nenhuma loja encontrada para a gerente selecionada.");
+        alert("Nenhum registro encontrado para a gerente selecionada com os filtros atuais.");
         return;
       }
 
@@ -609,7 +616,7 @@
           
           doc.setFontSize(11);
           doc.setTextColor(80, 80, 80);
-          doc.text(`Loja: ${nomeLoja} | Gerente: ${gerenteFiltro}`, 14, 23);
+          doc.text(`Loja: ${nomeLoja} | Gerente: ${gerenteFiltro} (Filtrado)`, 14, 23);
           
           doc.autoTable({
             head: [colunasExportacao],
